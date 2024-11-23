@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-server-conf
+  labels:
+    name: prometheus-server-conf
+  namespace: monitoring
+data:
+    prometheus.yml: |-
+      global:
+        scrape_interval: 5s
+        evaluation_interval: 5s
+      scrape_configs:
+        - job_name: 'monitoring-node-exporter' #HERE YOU PUT NAME FOR THE JOB COLLECTING DATA FROM NODE EXPORTER
+          kubernetes_sd_configs:
+            - role: pod
+              namespaces:
+                names:
+                  - monitoring  # Specify the namespace where Node Exporter pods are deployed
+          relabel_configs:
+            - source_labels: [__meta_kubernetes_pod_label_app]
+              action: keep
+              regex: node-exporter  # Filter pods labeled with app=node-exporter
+        - job_name: 'monitoring-kube-state-metrics' #HERE YOU PUT NAME FOR THE JOB COLLECTING DATA FROM KUBE STATE METRICS
+          static_configs:
+            - targets: ['kube-state-metrics:8080']  # Assuming kube-state-metrics service is in monitoring namespace
+    web.yml: |-
+      basic_auth_users:
+        user-name: password hashed using bcrypt
+# You can use this link to hash your password https://bcrypt-generator.com/
+# These credentials will be used to validated requests trying to access promehteus 
